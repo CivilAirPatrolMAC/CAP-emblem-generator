@@ -1,1 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  />
+  <title>Civil Air Patrol Emblem Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="page-header">
+      <div class="page-header__inner">
+        <div>
+          <p class="eyebrow">Civil Air Patrol Brand Tools</p>
+          <h1>Civil Air Patrol Emblem Generator</h1>
+          <p class="lede">
+            Build a CAP emblem graphic with arched top text, a wing or region
+            secondary graphic, and live preview before export.
+          </p>
+        </div>
 
+        <nav class="tool-switcher" aria-label="Related tools">
+          <a href="#" class="tool-switcher__link is-active">Emblem Generator</a>
+          <a href="#" class="tool-switcher__link">Subordinate Graphic Generator</a>
+          <a href="#" class="tool-switcher__link">Email Signature Block Generator</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="controls-column">
+        <section class="card guidance-card">
+          <h2>Emblem Graphic Guidance</h2>
+          <p>
+            Use this tool to create a CAP emblem-style graphic with approved
+            wing, region, or other authorized secondary artwork.
+          </p>
+
+          <h3>Guidelines, Standards, and Requirements</h3>
+          <ul class="guidance-list">
+            <li>Use only approved secondary graphics and emblems.</li>
+            <li>Top text should normally read <strong>CIVIL AIR PATROL</strong>.</li>
+            <li>Keep bottom text concise for readability on the lower arc.</li>
+            <li>Review spacing, alignment, and contrast before downloading.</li>
+            <li>Do not upload unofficial, altered, or low-quality graphics.</li>
+          </ul>
+        </section>
+
+        <div id="validation_warnings" class="warning-box" hidden></div>
+
+        <form id="emblem-form" class="card form-card" novalidate>
+          <h2>Build Your Emblem</h2>
+
+          <div class="form-section">
+            <h3>Graphic Type</h3>
+
+            <label class="field">
+              <span class="field__label">Mode</span>
+              <select id="mode">
+                <option value="wing-region">Wing / Region Emblem</option>
+                <option value="custom">Custom Approved Secondary Graphic</option>
+              </select>
+              <span class="field__help">
+                Keeps the emblem builder visually aligned with your other CAP tools.
+              </span>
+            </label>
+
+            <label class="field">
+              <span class="field__label">Template Style</span>
+              <select id="templateStyle">
+                <option value="shield-ribbon">Shield with bottom ribbon</option>
+                <option value="shield-arc">Shield with curved bottom text</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span class="field__label">Color Variant</span>
+              <select id="colorVariant">
+                <option value="blue-gold">Blue / Gold</option>
+                <option value="all-blue">All Blue</option>
+                <option value="all-white">All White</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="form-section">
+            <h3>Text</h3>
+
+            <label class="field">
+              <span class="field__label">Top Text</span>
+              <input
+                id="topText"
+                type="text"
+                maxlength="24"
+                value="CIVIL AIR PATROL"
+                autocomplete="off"
+              />
+              <span class="field__help">
+                Use short text only. Long text will not render cleanly on the upper arc.
+              </span>
+            </label>
+
+            <label class="field">
+              <span class="field__label">Bottom Text</span>
+              <input
+                id="bottomText"
+                type="text"
+                maxlength="28"
+                value="OKLAHOMA WING"
+                autocomplete="off"
+              />
+              <span class="field__help">
+                Recommended for wing, region, or similarly short organizational names.
+              </span>
+            </label>
+          </div>
+
+          <div class="form-section">
+            <h3>Secondary Graphic</h3>
+
+            <label class="field">
+              <span class="field__label">Approved Wing / Region Graphic</span>
+              <select id="graphicSelect">
+                <option value="oklahoma">Oklahoma Wing</option>
+                <option value="texas">Texas Wing</option>
+                <option value="new-mexico">New Mexico Wing</option>
+                <option value="southwest-region">Southwest Region</option>
+                <option value="north-central-region">North Central Region</option>
+              </select>
+              <span class="field__help">
+                Replace these sample entries with your existing approved catalog.
+              </span>
+            </label>
+
+            <label class="field">
+              <span class="field__label">Or upload approved graphic</span>
+              <input id="graphicUpload" type="file" accept=".png,.jpg,.jpeg,.webp,.svg" />
+              <span class="field__help">
+                Uploaded graphics should be transparent PNG or clean artwork with sufficient resolution.
+              </span>
+            </label>
+
+            <label class="checkbox-field">
+              <input id="makeTransparent" type="checkbox" />
+              <span>Attempt to make the white background transparent</span>
+            </label>
+          </div>
+
+          <div class="form-section">
+            <h3>Export</h3>
+
+            <div class="button-row">
+              <button type="button" id="downloadPngBtn" class="btn btn--primary">
+                Download PNG
+              </button>
+              <button type="button" id="downloadSvgBtn" class="btn btn--secondary">
+                Download SVG
+              </button>
+              <button type="button" id="resetBtn" class="btn btn--ghost">
+                Reset
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <section class="card howto-card">
+          <h2>How to use your emblem</h2>
+          <ol>
+            <li>Choose your template style and color variant.</li>
+            <li>Confirm top and bottom text are short and accurate.</li>
+            <li>Select an approved wing or region graphic, or upload an approved file.</li>
+            <li>Review the live preview before export.</li>
+            <li>Download PNG for routine use or SVG for future editing.</li>
+          </ol>
+        </section>
+
+        <footer class="page-footer">
+          Version 1.0. Last modified on April 14th, 2026. Managed by Maj. Roman Vitanza.
+        </footer>
+      </section>
+
+      <aside class="preview-column">
+        <section class="card preview-card">
+          <div class="preview-card__header">
+            <div>
+              <h2>Live Preview</h2>
+              <p>Review spacing, alignment, readability, and overall balance.</p>
+            </div>
+
+            <div class="preview-tabs" role="tablist" aria-label="Preview tabs">
+              <button
+                type="button"
+                class="preview-tab is-active"
+                data-tab="rendered"
+                aria-selected="true"
+              >
+                Preview
+              </button>
+              <button
+                type="button"
+                class="preview-tab"
+                data-tab="svg"
+                aria-selected="false"
+              >
+                SVG
+              </button>
+            </div>
+          </div>
+
+          <div class="preview-panel">
+            <div id="renderedPanel" class="preview-surface">
+              <div id="previewMount" class="preview-mount"></div>
+            </div>
+
+            <div id="svgPanel" class="code-surface" hidden>
+              <textarea
+                id="svgCode"
+                readonly
+                spellcheck="false"
+                aria-label="Generated SVG markup"
+              ></textarea>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
