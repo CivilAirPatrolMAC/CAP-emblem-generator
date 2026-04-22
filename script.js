@@ -8,32 +8,18 @@
     showTopArcText: true,
     useDiskImage: false,
     bottomText: "",
-    graphicSelect: "oklahoma",
+    graphicSelect: "",
     makeTransparent: false
   };
 
-  const GRAPHICS = {
-    oklahoma: {
-      label: "Oklahoma Wing",
-      path: "assets/wing/okemblem.png"
-    },
-    texas: {
-      label: "Texas Wing",
-      path: "assets/wing/txemblem.png"
-    },
-    "new-mexico": {
-      label: "New Mexico Wing",
-      path: "assets/wing/nmemblem.png"
-    },
-    "southwest-region": {
-      label: "Southwest Region",
-      path: "assets/region/swr-emblem.png"
-    },
-    "north-central-region": {
-      label: "North Central Region",
-      path: "assets/region/ncr-emblem.png"
-    }
-  };
+  const APPROVED_FOLDERS = ["Region", "Wing", "Group", "Squadron", "ncsa"];
+  const GITHUB_OWNER = "CivilAirPatrolMAC";
+  const GITHUB_REPO = "cap-logo-generator";
+  const GITHUB_BRANCH = "main";
+  const GITHUB_API_BASE = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents`;
+  const GITHUB_RAW_BASE = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
+
+  const GRAPHICS = {};
 
   const state = {
     ...DEFAULTS,
@@ -66,8 +52,9 @@
     previewTabs: Array.from(document.querySelectorAll(".preview-tab"))
   };
 
-  function init() {
+  async function init() {
     bindEvents();
+    await loadApprovedGraphics();
     applyStateToForm();
     renderAll();
   }
@@ -99,7 +86,9 @@
     els.showTopArcText.checked = state.showTopArcText;
     els.useDiskImage.checked = state.useDiskImage;
     els.bottomText.value = state.bottomText;
-    els.graphicSelect.value = state.graphicSelect;
+    if (state.graphicSelect) {
+      els.graphicSelect.value = state.graphicSelect;
+    }
     els.makeTransparent.checked = state.makeTransparent;
   }
 
@@ -173,7 +162,7 @@
     const warnings = getValidationWarnings();
     renderValidationWarnings(warnings);
 
-    if (!state.uploadedImageDataUrl) {
+    if (!state.uploadedImageDataUrl && !GRAPHICS[state.graphicSelect]) {
       state.renderedSvg = "";
       els.svgCode.value = "";
       els.previewMount.innerHTML = "";
@@ -197,6 +186,10 @@
 
     if (state.colorVariant === "all-white") {
       warnings.push("All White output is best used on dark backgrounds only.");
+    }
+
+    if (!state.uploadedImageDataUrl && !GRAPHICS[state.graphicSelect]) {
+      warnings.push("No approved secondary graphic was loaded. Pick from Region, Wing, Group, Squadron, or NCSA, or upload a file.");
     }
 
     return warnings;
@@ -261,6 +254,75 @@
 
     const entry = GRAPHICS[state.graphicSelect];
     return entry ? entry.path : "";
+  }
+
+  async function loadApprovedGraphics() {
+    const approvedGraphics = [];
+
+    for (const folder of APPROVED_FOLDERS) {
+      try {
+        const response = await fetch(`${GITHUB_API_BASE}/${folder}`);
+        if (!response.ok) {
+          continue;
+        }
+
+        const items = await response.json();
+        if (!Array.isArray(items)) {
+          continue;
+        }
+
+        for (const item of items) {
+          if (item.type !== "file" || !/\.(png|jpe?g|webp|svg)$/i.test(item.name)) {
+            continue;
+          }
+
+          const key = `${folder.toLowerCase()}-${item.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+          const cleanName = item.name.replace(/\.[^/.]+$/, "").replace(/[-_]+/g, " ").trim();
+          approvedGraphics.push({
+            key,
+            label: `${toDisplayCase(cleanName)} (${folder})`,
+            path: `${GITHUB_RAW_BASE}/${folder}/${encodeURIComponent(item.name)}`
+          });
+        }
+      } catch (error) {
+        console.warn(`Unable to load approved graphics from ${folder}:`, error);
+      }
+    }
+
+    approvedGraphics
+      .sort((a, b) => a.label.localeCompare(b.label))
+      .forEach((entry) => {
+        GRAPHICS[entry.key] = { label: entry.label, path: entry.path };
+      });
+
+    populateGraphicSelect(approvedGraphics);
+  }
+
+  function populateGraphicSelect(items) {
+    els.graphicSelect.innerHTML = "";
+
+    if (!items.length) {
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "No approved graphics loaded";
+      els.graphicSelect.appendChild(placeholder);
+      state.graphicSelect = "";
+      return;
+    }
+
+    items.forEach((item, index) => {
+      const option = document.createElement("option");
+      option.value = item.key;
+      option.textContent = item.label;
+      els.graphicSelect.appendChild(option);
+      if (index === 0) {
+        state.graphicSelect = item.key;
+      }
+    });
+  }
+
+  function toDisplayCase(text) {
+    return text.replace(/\b\w/g, (char) => char.toUpperCase());
   }
 
   function getRelativeImagePlacement() {
