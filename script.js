@@ -84,7 +84,18 @@
     els.makeTransparent.checked = state.makeTransparent;
   }
 
-  function onFieldChange() {
+  function onFieldChange(event) {
+    if (event?.target === els.bottomText) {
+      const cursorPosition = els.bottomText.selectionStart;
+      const uppercasedValue = els.bottomText.value.toUpperCase();
+      if (els.bottomText.value !== uppercasedValue) {
+        els.bottomText.value = uppercasedValue;
+        if (typeof cursorPosition === "number") {
+          els.bottomText.setSelectionRange(cursorPosition, cursorPosition);
+        }
+      }
+    }
+
     readFormIntoState();
     renderAll();
   }
@@ -122,7 +133,7 @@
     state.colorVariant = els.colorVariant.value;
     state.showTopArcText = els.showTopArcText.checked;
     state.useDiskImage = els.useDiskImage.checked;
-    state.bottomText = els.bottomText.value.trim();
+    state.bottomText = els.bottomText.value.trim().toUpperCase();
     state.graphicSelect = els.graphicSelect.value;
     state.makeTransparent = els.makeTransparent.checked;
   }
@@ -339,9 +350,9 @@
   <text
     x="${straightTextX}"
     y="${straightTextY}"
-    font-family="Inter, Arial, sans-serif"
+    font-family="Rajdhani, Inter, Arial, sans-serif"
     font-size="70"
-    font-weight="800"
+    font-weight="700"
     letter-spacing="6"
     text-anchor="middle"
     fill="${palette.arcText}"
@@ -349,9 +360,9 @@
       `
         : `
   <text
-    font-family="Inter, Arial, sans-serif"
+    font-family="Rajdhani, Inter, Arial, sans-serif"
     font-size="70"
-    font-weight="800"
+    font-weight="700"
     letter-spacing="6"
     fill="${palette.arcText}"
   >
@@ -363,9 +374,9 @@
   <text
     x="600"
     y="1135"
-    font-family="Inter, Arial, sans-serif"
+    font-family="Rajdhani, Inter, Arial, sans-serif"
     font-size="58"
-    font-weight="800"
+    font-weight="700"
     letter-spacing="5"
     text-anchor="middle"
     fill="${palette.arcText}"
