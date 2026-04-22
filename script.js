@@ -171,10 +171,19 @@
     const warnings = getValidationWarnings();
     renderValidationWarnings(warnings);
 
+    if (!state.uploadedImageDataUrl) {
+      state.renderedSvg = "";
+      els.svgCode.value = "";
+      els.previewMount.innerHTML = "";
+      els.previewMount.classList.add("preview-mount--empty");
+      return;
+    }
+
     const svg = buildSvg();
     state.renderedSvg = svg;
     els.svgCode.value = svg;
     els.previewMount.innerHTML = svg;
+    els.previewMount.classList.remove("preview-mount--empty");
   }
 
   function getValidationWarnings() {
@@ -389,12 +398,14 @@
   }
 
   function downloadSvg() {
+    if (!state.renderedSvg) return;
     const blob = new Blob([state.renderedSvg], { type: "image/svg+xml;charset=utf-8" });
     const filename = makeFilename("svg");
     triggerDownload(URL.createObjectURL(blob), filename, true);
   }
 
   async function downloadPng() {
+    if (!state.renderedSvg) return;
     try {
       const blob = new Blob([state.renderedSvg], { type: "image/svg+xml;charset=utf-8" });
       const svgUrl = URL.createObjectURL(blob);
