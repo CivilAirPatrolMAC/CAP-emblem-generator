@@ -5,8 +5,7 @@
     mode: "wing-region",
     templateStyle: "shield-ribbon",
     colorVariant: "blue-gold",
-    topText: "CIVIL AIR PATROL",
-    bottomText: "OKLAHOMA WING",
+    showTopArcText: true,
     graphicSelect: "oklahoma",
     makeTransparent: false
   };
@@ -34,11 +33,10 @@
     }
   };
 
-  const CAP_SEAL_PATH = "assets/core/cap-triangle-starmark.png";
-
   const state = {
     ...DEFAULTS,
     uploadedImageDataUrl: null,
+    uploadedImageSize: null,
     renderedSvg: ""
   };
 
@@ -49,8 +47,7 @@
     mode: $("mode"),
     templateStyle: $("templateStyle"),
     colorVariant: $("colorVariant"),
-    topText: $("topText"),
-    bottomText: $("bottomText"),
+    showTopArcText: $("showTopArcText"),
     graphicSelect: $("graphicSelect"),
     graphicUpload: $("graphicUpload"),
     makeTransparent: $("makeTransparent"),
@@ -75,8 +72,7 @@
     els.mode.addEventListener("change", onFieldChange);
     els.templateStyle.addEventListener("change", onFieldChange);
     els.colorVariant.addEventListener("change", onFieldChange);
-    els.topText.addEventListener("input", onFieldChange);
-    els.bottomText.addEventListener("input", onFieldChange);
+    els.showTopArcText.addEventListener("change", onFieldChange);
     els.graphicSelect.addEventListener("change", onFieldChange);
     els.makeTransparent.addEventListener("change", onFieldChange);
     els.graphicUpload.addEventListener("change", onUploadChange);
@@ -94,8 +90,7 @@
     els.mode.value = state.mode;
     els.templateStyle.value = state.templateStyle;
     els.colorVariant.value = state.colorVariant;
-    els.topText.value = state.topText;
-    els.bottomText.value = state.bottomText;
+    els.showTopArcText.checked = state.showTopArcText;
     els.graphicSelect.value = state.graphicSelect;
     els.makeTransparent.checked = state.makeTransparent;
   }
@@ -109,12 +104,18 @@
     const file = event.target.files && event.target.files[0];
     if (!file) {
       state.uploadedImageDataUrl = null;
+      state.uploadedImageSize = null;
       renderAll();
       return;
     }
 
     const fileDataUrl = await readFileAsDataUrl(file);
     state.uploadedImageDataUrl = fileDataUrl;
+    const uploadedImage = await loadImage(fileDataUrl);
+    state.uploadedImageSize = {
+      width: uploadedImage.naturalWidth || 1,
+      height: uploadedImage.naturalHeight || 1
+    };
     readFormIntoState();
 
     if (state.makeTransparent) {
@@ -132,18 +133,9 @@
     state.mode = els.mode.value;
     state.templateStyle = els.templateStyle.value;
     state.colorVariant = els.colorVariant.value;
-    state.topText = sanitizeArcText(els.topText.value, 24);
-    state.bottomText = sanitizeArcText(els.bottomText.value, 28);
+    state.showTopArcText = els.showTopArcText.checked;
     state.graphicSelect = els.graphicSelect.value;
     state.makeTransparent = els.makeTransparent.checked;
-  }
-
-  function sanitizeArcText(value, maxLen) {
-    return String(value || "")
-      .replace(/\s+/g, " ")
-      .trim()
-      .toUpperCase()
-      .slice(0, maxLen);
   }
 
   function escapeXml(value) {
@@ -188,22 +180,6 @@
 
   function getValidationWarnings() {
     const warnings = [];
-
-    if (!state.topText) {
-      warnings.push("Top text is required.");
-    }
-
-    if (!state.bottomText) {
-      warnings.push("Bottom text is required.");
-    }
-
-    if (state.topText.length > 18) {
-      warnings.push("Top text is approaching the maximum safe length for upper-arc readability.");
-    }
-
-    if (state.bottomText.length > 22) {
-      warnings.push("Bottom text is approaching the maximum safe length for lower-arc readability.");
-    }
 
     if (state.mode === "custom" && !state.uploadedImageDataUrl) {
       warnings.push("Custom mode is selected, but no approved secondary graphic has been uploaded.");
@@ -277,62 +253,31 @@
     return entry ? entry.path : "";
   }
 
+  function getRelativeImagePlacement() {
+    const frame = { x: 180, y: 220, width: 840, height: 840 };
+    const source = state.uploadedImageSize || { width: 1, height: 1 };
+    const scale = Math.min(frame.width / source.width, frame.height / source.height);
+    const width = source.width * scale;
+    const height = source.height * scale;
+    const x = frame.x + (frame.width - width) / 2;
+    const y = frame.y + (frame.height - height) / 2;
+
+    return { x, y, width, height };
+  }
+
   function buildSvg() {
     const palette = getPalette();
-    const topText = escapeXml(state.topText || "CIVIL AIR PATROL");
-    const bottomText = escapeXml(state.bottomText || "");
+    const topText = "CIVIL AIR PATROL";
     const graphicHref = escapeXml(getGraphicHref());
-    const sealHref = escapeXml(CAP_SEAL_PATH);
-
-    const bottomElement =
-      state.templateStyle === "shield-ribbon"
-        ? `
-          <g transform="translate(600 938)">
-            <path
-              d="M -245 -40 C -230 -78, -178 -104, -128 -88 C -108 -42, -76 -20, 0 -20 C 76 -20, 108 -42, 128 -88 C 178 -104, 230 -78, 245 -40 C 205 18, 140 54, 0 54 C -140 54, -205 18, -245 -40 Z"
-              fill="${palette.ribbonFill}"
-              stroke="${palette.ribbonStroke}"
-              stroke-width="8"
-            />
-            <text
-              x="0"
-              y="18"
-              text-anchor="middle"
-              font-size="60"
-              font-weight="700"
-              fill="${palette.arcText}"
-              letter-spacing="4"
-            >${bottomText}</text>
-          </g>
-        `
-        : `
-          <text
-            font-size="62"
-            font-weight="700"
-            letter-spacing="5"
-            fill="${palette.arcText}"
-          >
-            <textPath href="#bottomArc" startOffset="50%" text-anchor="middle">${bottomText}</textPath>
-          </text>
-        `;
-
-    return `
-<svg
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 1200 1200"
-  role="img"
-  aria-label="${topText} emblem graphic"
->
-  <defs>
-    <path id="topArc" d="M 210 268 A 390 390 0 0 1 990 268" />
-    <path id="bottomArc" d="M 315 930 A 285 285 0 0 0 885 930" />
-    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-opacity="0.18" />
-    </filter>
-  </defs>
-
-  <rect width="1200" height="1200" fill="transparent" />
-
+    const imagePlacement = getRelativeImagePlacement();
+    const arcGap = Math.max(30, imagePlacement.height * 0.08);
+    const arcY = imagePlacement.y - arcGap;
+    const arcInset = Math.max(20, imagePlacement.width * 0.06);
+    const startX = imagePlacement.x + arcInset;
+    const endX = imagePlacement.x + imagePlacement.width - arcInset;
+    const arcRadius = Math.max(120, imagePlacement.width * 0.62);
+    const arcTextElement = state.showTopArcText
+      ? `
   <text
     font-family="Inter, Arial, sans-serif"
     font-size="70"
@@ -342,48 +287,43 @@
   >
     <textPath href="#topArc" startOffset="50%" text-anchor="middle">${topText}</textPath>
   </text>
+      `
+      : "";
+
+    return `
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1200 1200"
+  role="img"
+  aria-label="${topText} emblem graphic"
+>
+  <defs>
+    <path id="topArc" d="M ${startX} ${arcY} A ${arcRadius} ${arcRadius} 0 0 1 ${endX} ${arcY}" />
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-opacity="0.18" />
+    </filter>
+  </defs>
+
+  <rect width="1200" height="1200" fill="transparent" />
+
+  ${arcTextElement}
 
   <g filter="url(#softShadow)">
-    <g transform="translate(600 708)">
-      <path
-        d="M -170 0 C -130 46, -80 74, -20 82 C -60 42, -95 0, -110 -58 C -132 -32, -152 -12, -170 0 Z"
-        fill="${palette.laurel}"
-        opacity="0.95"
-      />
-      <path
-        d="M 170 0 C 130 46, 80 74, 20 82 C 60 42, 95 0, 110 -58 C 132 -32, 152 -12, 170 0 Z"
-        fill="${palette.laurel}"
-        opacity="0.95"
-      />
-    </g>
-
     <image
       href="${graphicHref}"
-      x="315"
-      y="340"
-      width="570"
-      height="570"
+      x="${imagePlacement.x}"
+      y="${imagePlacement.y}"
+      width="${imagePlacement.width}"
+      height="${imagePlacement.height}"
       preserveAspectRatio="xMidYMid meet"
     />
-
-    <image
-      href="${sealHref}"
-      x="485"
-      y="505"
-      width="230"
-      height="230"
-      preserveAspectRatio="xMidYMid meet"
-      opacity="0.98"
-    />
-
-    ${bottomElement}
   </g>
 </svg>
     `.trim();
   }
 
   function resetForm() {
-    Object.assign(state, DEFAULTS, { uploadedImageDataUrl: null, renderedSvg: "" });
+    Object.assign(state, DEFAULTS, { uploadedImageDataUrl: null, uploadedImageSize: null, renderedSvg: "" });
     els.graphicUpload.value = "";
     applyStateToForm();
     renderAll();
@@ -426,12 +366,7 @@
   }
 
   function makeFilename(ext) {
-    const safeBottom = (state.bottomText || "cap-emblem")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
-
-    return `${safeBottom || "cap-emblem"}.${ext}`;
+    return `cap-emblem.${ext}`;
   }
 
   function triggerDownload(url, filename, revokeLater = false) {

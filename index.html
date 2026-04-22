@@ -96,32 +96,9 @@
           <div class="form-section">
             <h3>Text</h3>
 
-            <label class="field">
-              <span class="field__label">Top Text</span>
-              <input
-                id="topText"
-                type="text"
-                maxlength="24"
-                value="CIVIL AIR PATROL"
-                autocomplete="off"
-              />
-              <span class="field__help">
-                Use short text only. Long text will not render cleanly on the upper arc.
-              </span>
-            </label>
-
-            <label class="field">
-              <span class="field__label">Bottom Text</span>
-              <input
-                id="bottomText"
-                type="text"
-                maxlength="28"
-                value="OKLAHOMA WING"
-                autocomplete="off"
-              />
-              <span class="field__help">
-                Recommended for wing, region, or similarly short organizational names.
-              </span>
+            <label class="checkbox-field">
+              <input id="showTopArcText" type="checkbox" checked />
+              <span>Show arched top text (<strong>CIVIL AIR PATROL</strong>) above uploaded image</span>
             </label>
           </div>
 
