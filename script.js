@@ -6,6 +6,7 @@
     templateStyle: "shield-ribbon",
     colorVariant: "blue-gold",
     showTopArcText: true,
+    useDiskImage: false,
     bottomText: "",
     graphicSelect: "oklahoma",
     makeTransparent: false
@@ -49,6 +50,7 @@
     templateStyle: $("templateStyle"),
     colorVariant: $("colorVariant"),
     showTopArcText: $("showTopArcText"),
+    useDiskImage: $("useDiskImage"),
     bottomText: $("bottomText"),
     graphicSelect: $("graphicSelect"),
     graphicUpload: $("graphicUpload"),
@@ -75,6 +77,7 @@
     els.templateStyle.addEventListener("change", onFieldChange);
     els.colorVariant.addEventListener("change", onFieldChange);
     els.showTopArcText.addEventListener("change", onFieldChange);
+    els.useDiskImage.addEventListener("change", onFieldChange);
     els.bottomText.addEventListener("input", onFieldChange);
     els.graphicSelect.addEventListener("change", onFieldChange);
     els.makeTransparent.addEventListener("change", onFieldChange);
@@ -94,6 +97,7 @@
     els.templateStyle.value = state.templateStyle;
     els.colorVariant.value = state.colorVariant;
     els.showTopArcText.checked = state.showTopArcText;
+    els.useDiskImage.checked = state.useDiskImage;
     els.bottomText.value = state.bottomText;
     els.graphicSelect.value = state.graphicSelect;
     els.makeTransparent.checked = state.makeTransparent;
@@ -138,6 +142,7 @@
     state.templateStyle = els.templateStyle.value;
     state.colorVariant = els.colorVariant.value;
     state.showTopArcText = els.showTopArcText.checked;
+    state.useDiskImage = els.useDiskImage.checked;
     state.bottomText = els.bottomText.value.trim();
     state.graphicSelect = els.graphicSelect.value;
     state.makeTransparent = els.makeTransparent.checked;
@@ -282,8 +287,24 @@
     const startX = imagePlacement.x + arcInset;
     const endX = imagePlacement.x + imagePlacement.width - arcInset;
     const arcRadius = Math.max(140, imagePlacement.width * 0.86);
-    const arcTextElement = state.showTopArcText
-      ? `
+    const straightTextY = imagePlacement.y - 12;
+    const straightTextX = imagePlacement.x + imagePlacement.width / 2;
+    const topTextElement = !state.showTopArcText
+      ? ""
+      : state.useDiskImage
+        ? `
+  <text
+    x="${straightTextX}"
+    y="${straightTextY}"
+    font-family="Inter, Arial, sans-serif"
+    font-size="70"
+    font-weight="800"
+    letter-spacing="6"
+    text-anchor="middle"
+    fill="${palette.arcText}"
+  >${topText}</text>
+      `
+        : `
   <text
     font-family="Inter, Arial, sans-serif"
     font-size="70"
@@ -293,8 +314,7 @@
   >
     <textPath href="#topArc" startOffset="50%" text-anchor="middle">${topText}</textPath>
   </text>
-      `
-      : "";
+      `;
     const bottomTextElement = bottomText
       ? `
   <text
@@ -326,7 +346,7 @@
 
   <rect width="1200" height="1200" fill="transparent" />
 
-  ${arcTextElement}
+  ${topTextElement}
   ${bottomTextElement}
 
   <g filter="url(#softShadow)">
