@@ -6,6 +6,7 @@
     templateStyle: "shield-ribbon",
     colorVariant: "blue-gold",
     showTopArcText: true,
+    bottomText: "",
     graphicSelect: "oklahoma",
     makeTransparent: false
   };
@@ -48,6 +49,7 @@
     templateStyle: $("templateStyle"),
     colorVariant: $("colorVariant"),
     showTopArcText: $("showTopArcText"),
+    bottomText: $("bottomText"),
     graphicSelect: $("graphicSelect"),
     graphicUpload: $("graphicUpload"),
     makeTransparent: $("makeTransparent"),
@@ -73,6 +75,7 @@
     els.templateStyle.addEventListener("change", onFieldChange);
     els.colorVariant.addEventListener("change", onFieldChange);
     els.showTopArcText.addEventListener("change", onFieldChange);
+    els.bottomText.addEventListener("input", onFieldChange);
     els.graphicSelect.addEventListener("change", onFieldChange);
     els.makeTransparent.addEventListener("change", onFieldChange);
     els.graphicUpload.addEventListener("change", onUploadChange);
@@ -91,6 +94,7 @@
     els.templateStyle.value = state.templateStyle;
     els.colorVariant.value = state.colorVariant;
     els.showTopArcText.checked = state.showTopArcText;
+    els.bottomText.value = state.bottomText;
     els.graphicSelect.value = state.graphicSelect;
     els.makeTransparent.checked = state.makeTransparent;
   }
@@ -134,6 +138,7 @@
     state.templateStyle = els.templateStyle.value;
     state.colorVariant = els.colorVariant.value;
     state.showTopArcText = els.showTopArcText.checked;
+    state.bottomText = els.bottomText.value.trim();
     state.graphicSelect = els.graphicSelect.value;
     state.makeTransparent = els.makeTransparent.checked;
   }
@@ -269,13 +274,14 @@
     const palette = getPalette();
     const topText = "CIVIL AIR PATROL";
     const graphicHref = escapeXml(getGraphicHref());
+    const bottomText = escapeXml(state.bottomText);
     const imagePlacement = getRelativeImagePlacement();
-    const arcGap = Math.max(30, imagePlacement.height * 0.08);
+    const arcGap = Math.max(14, imagePlacement.height * 0.035);
     const arcY = imagePlacement.y - arcGap;
     const arcInset = Math.max(20, imagePlacement.width * 0.06);
     const startX = imagePlacement.x + arcInset;
     const endX = imagePlacement.x + imagePlacement.width - arcInset;
-    const arcRadius = Math.max(120, imagePlacement.width * 0.62);
+    const arcRadius = Math.max(140, imagePlacement.width * 0.86);
     const arcTextElement = state.showTopArcText
       ? `
   <text
@@ -287,6 +293,20 @@
   >
     <textPath href="#topArc" startOffset="50%" text-anchor="middle">${topText}</textPath>
   </text>
+      `
+      : "";
+    const bottomTextElement = bottomText
+      ? `
+  <text
+    x="600"
+    y="1135"
+    font-family="Inter, Arial, sans-serif"
+    font-size="58"
+    font-weight="800"
+    letter-spacing="5"
+    text-anchor="middle"
+    fill="${palette.arcText}"
+  >${bottomText}</text>
       `
       : "";
 
@@ -307,6 +327,7 @@
   <rect width="1200" height="1200" fill="transparent" />
 
   ${arcTextElement}
+  ${bottomTextElement}
 
   <g filter="url(#softShadow)">
     <image
