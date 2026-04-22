@@ -10,7 +10,7 @@
     makeTransparent: false
   };
 
-  const APPROVED_FOLDERS = ["Region", "Wing", "Group", "Squadron", "ncsa"];
+  const APPROVED_FOLDERS = ["Region", "Wing", "Group", "Squadron"];
   const GITHUB_OWNER = "CivilAirPatrolMAC";
   const GITHUB_REPO = "cap-logo-generator";
   const GITHUB_BRANCH = "main";
@@ -175,7 +175,7 @@
     }
 
     if (!state.uploadedImageDataUrl && !GRAPHICS[state.graphicSelect]) {
-      warnings.push("No secondary graphic was loaded. Pick from Region, Wing, Group, Squadron, or NCSA, or upload a file.");
+      warnings.push("No secondary graphic was loaded. Pick from Region, Wing, Group, or Squadron, or upload a file.");
     }
 
     return warnings;
