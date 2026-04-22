@@ -2,9 +2,7 @@
   "use strict";
 
   const DEFAULTS = {
-    mode: "wing-region",
-    templateStyle: "shield-ribbon",
-    colorVariant: "blue-gold",
+    colorVariant: "all-blue",
     showTopArcText: true,
     useDiskImage: false,
     bottomText: "",
@@ -32,8 +30,6 @@
 
   const els = {
     form: $("emblem-form"),
-    mode: $("mode"),
-    templateStyle: $("templateStyle"),
     colorVariant: $("colorVariant"),
     showTopArcText: $("showTopArcText"),
     useDiskImage: $("useDiskImage"),
@@ -60,8 +56,6 @@
   }
 
   function bindEvents() {
-    els.mode.addEventListener("change", onFieldChange);
-    els.templateStyle.addEventListener("change", onFieldChange);
     els.colorVariant.addEventListener("change", onFieldChange);
     els.showTopArcText.addEventListener("change", onFieldChange);
     els.useDiskImage.addEventListener("change", onFieldChange);
@@ -80,8 +74,6 @@
   }
 
   function applyStateToForm() {
-    els.mode.value = state.mode;
-    els.templateStyle.value = state.templateStyle;
     els.colorVariant.value = state.colorVariant;
     els.showTopArcText.checked = state.showTopArcText;
     els.useDiskImage.checked = state.useDiskImage;
@@ -127,8 +119,6 @@
   }
 
   function readFormIntoState() {
-    state.mode = els.mode.value;
-    state.templateStyle = els.templateStyle.value;
     state.colorVariant = els.colorVariant.value;
     state.showTopArcText = els.showTopArcText.checked;
     state.useDiskImage = els.useDiskImage.checked;
@@ -180,16 +170,12 @@
   function getValidationWarnings() {
     const warnings = [];
 
-    if (state.mode === "custom" && !state.uploadedImageDataUrl) {
-      warnings.push("Custom mode is selected, but no approved secondary graphic has been uploaded.");
-    }
-
     if (state.colorVariant === "all-white") {
       warnings.push("All White output is best used on dark backgrounds only.");
     }
 
     if (!state.uploadedImageDataUrl && !GRAPHICS[state.graphicSelect]) {
-      warnings.push("No approved secondary graphic was loaded. Pick from Region, Wing, Group, Squadron, or NCSA, or upload a file.");
+      warnings.push("No secondary graphic was loaded. Pick from Region, Wing, Group, Squadron, or NCSA, or upload a file.");
     }
 
     return warnings;
@@ -230,24 +216,19 @@
           laurel: "#ffffff",
           arcText: "#ffffff"
         };
-      case "blue-gold":
       default:
         return {
-          shieldFill: "#1b2aa8",
-          shieldStroke: "#f0b323",
+          shieldFill: "#1736b6",
+          shieldStroke: "#1736b6",
           ribbonFill: "#ffffff",
-          ribbonStroke: "#f0b323",
-          laurel: "#f0b323",
+          ribbonStroke: "#1736b6",
+          laurel: "#1736b6",
           arcText: "#1736b6"
         };
     }
   }
 
   function getGraphicHref() {
-    if (state.mode === "custom" && state.uploadedImageDataUrl) {
-      return state.uploadedImageDataUrl;
-    }
-
     if (state.uploadedImageDataUrl) {
       return state.uploadedImageDataUrl;
     }
@@ -257,7 +238,7 @@
   }
 
   async function loadApprovedGraphics() {
-    const approvedGraphics = [];
+    const graphics = [];
 
     for (const folder of APPROVED_FOLDERS) {
       try {
@@ -278,24 +259,24 @@
 
           const key = `${folder.toLowerCase()}-${item.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
           const cleanName = item.name.replace(/\.[^/.]+$/, "").replace(/[-_]+/g, " ").trim();
-          approvedGraphics.push({
+          graphics.push({
             key,
             label: `${toDisplayCase(cleanName)} (${folder})`,
             path: `${GITHUB_RAW_BASE}/${folder}/${encodeURIComponent(item.name)}`
           });
         }
       } catch (error) {
-        console.warn(`Unable to load approved graphics from ${folder}:`, error);
+        console.warn(`Unable to load graphics from ${folder}:`, error);
       }
     }
 
-    approvedGraphics
+    graphics
       .sort((a, b) => a.label.localeCompare(b.label))
       .forEach((entry) => {
         GRAPHICS[entry.key] = { label: entry.label, path: entry.path };
       });
 
-    populateGraphicSelect(approvedGraphics);
+    populateGraphicSelect(graphics);
   }
 
   function populateGraphicSelect(items) {
@@ -304,7 +285,7 @@
     if (!items.length) {
       const placeholder = document.createElement("option");
       placeholder.value = "";
-      placeholder.textContent = "No approved graphics loaded";
+      placeholder.textContent = "No graphics loaded";
       els.graphicSelect.appendChild(placeholder);
       state.graphicSelect = "";
       return;
