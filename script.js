@@ -6,18 +6,73 @@
     showTopArcText: true,
     useDiskImage: false,
     bottomText: "",
-    graphicSelect: "",
+    ncsaSelect: "",
+    regionSelect: "",
+    wingSelect: "",
+    squadronSelect: "",
     makeTransparent: false
   };
 
-  const APPROVED_FOLDERS = ["Region", "Wing", "Group", "Squadron"];
-  const GITHUB_OWNER = "CivilAirPatrolMAC";
-  const GITHUB_REPO = "cap-logo-generator";
-  const GITHUB_BRANCH = "main";
-  const GITHUB_API_BASE = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents`;
-  const GITHUB_RAW_BASE = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
+  const GRAPHIC_GROUPS = {
+    ncsa: {
+      folder: "ncsa",
+      label: "NCSA",
+      selectId: "ncsaSelect",
+      emptyOption: "No NCSA selected"
+    },
+    region: {
+      folder: "region",
+      label: "Region",
+      selectId: "regionSelect",
+      emptyOption: "No region selected"
+    },
+    wing: {
+      folder: "wing",
+      label: "Wing",
+      selectId: "wingSelect",
+      emptyOption: "No wing selected"
+    },
+    squadron: {
+      folder: "squadron",
+      label: "Squadron",
+      selectId: "squadronSelect",
+      emptyOption: "No squadron selected"
+    }
+  };
 
-  const GRAPHICS = {};
+  const GRAPHICS = {
+    ncsa: {},
+    region: {},
+    wing: {},
+    squadron: {}
+  };
+  const GRAPHIC_FILES = {
+    ncsa: ["mots.png"],
+    region: ["swremblem.png"],
+    wing: [
+      "aremblem.png",
+      "azemblem.png",
+      "gaemblem.png",
+      "laemblem.png",
+      "natcapemblem.png",
+      "nmemblem.png",
+      "nvemblem.png",
+      "okemblem.png",
+      "txemblem.png"
+    ],
+    squadron: [
+      "dc026emblem.png",
+      "dc033emblem.png",
+      "dc045emblem.png",
+      "dc051emblem.png",
+      "dc053emblem.png",
+      "dc060emblem.png",
+      "in002emblem.webp",
+      "tx076emblem.png",
+      "tx154emblem.png",
+      "tx388emblem.png"
+    ]
+  };
 
   const state = {
     ...DEFAULTS,
@@ -34,7 +89,10 @@
     showTopArcText: $("showTopArcText"),
     useDiskImage: $("useDiskImage"),
     bottomText: $("bottomText"),
-    graphicSelect: $("graphicSelect"),
+    ncsaSelect: $("ncsaSelect"),
+    regionSelect: $("regionSelect"),
+    wingSelect: $("wingSelect"),
+    squadronSelect: $("squadronSelect"),
     graphicUpload: $("graphicUpload"),
     makeTransparent: $("makeTransparent"),
     previewMount: $("previewMount"),
@@ -60,7 +118,10 @@
     els.showTopArcText.addEventListener("change", onFieldChange);
     els.useDiskImage.addEventListener("change", onFieldChange);
     els.bottomText.addEventListener("input", onFieldChange);
-    els.graphicSelect.addEventListener("change", onFieldChange);
+    els.ncsaSelect.addEventListener("change", onGroupedSelectChange("ncsaSelect"));
+    els.regionSelect.addEventListener("change", onGroupedSelectChange("regionSelect"));
+    els.wingSelect.addEventListener("change", onGroupedSelectChange("wingSelect"));
+    els.squadronSelect.addEventListener("change", onGroupedSelectChange("squadronSelect"));
     els.makeTransparent.addEventListener("change", onFieldChange);
     els.graphicUpload.addEventListener("change", onUploadChange);
 
@@ -78,10 +139,35 @@
     els.showTopArcText.checked = state.showTopArcText;
     els.useDiskImage.checked = state.useDiskImage;
     els.bottomText.value = state.bottomText;
-    if (state.graphicSelect) {
-      els.graphicSelect.value = state.graphicSelect;
-    }
+    els.ncsaSelect.value = state.ncsaSelect;
+    els.regionSelect.value = state.regionSelect;
+    els.wingSelect.value = state.wingSelect;
+    els.squadronSelect.value = state.squadronSelect;
     els.makeTransparent.checked = state.makeTransparent;
+  }
+
+  function onGroupedSelectChange(activeSelectId) {
+    return () => {
+      if (els[activeSelectId].value) {
+        clearOtherSelects(activeSelectId);
+        clearUploadedGraphic();
+      }
+      onFieldChange();
+    };
+  }
+
+  function clearOtherSelects(activeSelectId) {
+    ["ncsaSelect", "regionSelect", "wingSelect", "squadronSelect"].forEach((selectId) => {
+      if (selectId !== activeSelectId) {
+        els[selectId].value = "";
+      }
+    });
+  }
+
+  function clearUploadedGraphic() {
+    state.uploadedImageDataUrl = null;
+    state.uploadedImageSize = null;
+    els.graphicUpload.value = "";
   }
 
   function onFieldChange(event) {
@@ -110,6 +196,9 @@
     }
 
     const fileDataUrl = await readFileAsDataUrl(file);
+    ["ncsaSelect", "regionSelect", "wingSelect", "squadronSelect"].forEach((selectId) => {
+      els[selectId].value = "";
+    });
     state.uploadedImageDataUrl = fileDataUrl;
     const uploadedImage = await loadImage(fileDataUrl);
     state.uploadedImageSize = {
@@ -134,7 +223,10 @@
     state.showTopArcText = els.showTopArcText.checked;
     state.useDiskImage = els.useDiskImage.checked;
     state.bottomText = els.bottomText.value.trim().toUpperCase();
-    state.graphicSelect = els.graphicSelect.value;
+    state.ncsaSelect = els.ncsaSelect.value;
+    state.regionSelect = els.regionSelect.value;
+    state.wingSelect = els.wingSelect.value;
+    state.squadronSelect = els.squadronSelect.value;
     state.makeTransparent = els.makeTransparent.checked;
   }
 
@@ -163,7 +255,7 @@
     const warnings = getValidationWarnings();
     renderValidationWarnings(warnings);
 
-    if (!state.uploadedImageDataUrl && !GRAPHICS[state.graphicSelect]) {
+    if (!state.uploadedImageDataUrl && !getSelectedGraphicEntry()) {
       state.renderedSvg = "";
       els.svgCode.value = "";
       els.previewMount.innerHTML = "";
@@ -185,8 +277,8 @@
       warnings.push("All White output is best used on dark backgrounds only.");
     }
 
-    if (!state.uploadedImageDataUrl && !GRAPHICS[state.graphicSelect]) {
-      warnings.push("No secondary graphic was loaded. Pick from Region, Wing, Group, or Squadron, or upload a file.");
+    if (!state.uploadedImageDataUrl && !getSelectedGraphicEntry()) {
+      warnings.push("No secondary graphic was loaded. Pick from NCSA, Region, Wing, or Squadron, or upload a file.");
     }
 
     return warnings;
@@ -240,77 +332,78 @@
   }
 
   function getGraphicHref() {
+    const selectedEntry = getSelectedGraphicEntry();
+    if (selectedEntry) {
+      return selectedEntry.path;
+    }
+
     if (state.uploadedImageDataUrl) {
       return state.uploadedImageDataUrl;
     }
 
-    const entry = GRAPHICS[state.graphicSelect];
-    return entry ? entry.path : "";
+    return "";
   }
 
   async function loadApprovedGraphics() {
-    const graphics = [];
-
-    for (const folder of APPROVED_FOLDERS) {
-      try {
-        const response = await fetch(`${GITHUB_API_BASE}/${folder}`);
-        if (!response.ok) {
-          continue;
-        }
-
-        const items = await response.json();
-        if (!Array.isArray(items)) {
-          continue;
-        }
-
-        for (const item of items) {
-          if (item.type !== "file" || !/\.(png|jpe?g|webp|svg)$/i.test(item.name)) {
-            continue;
-          }
-
-          const key = `${folder.toLowerCase()}-${item.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
-          const cleanName = item.name.replace(/\.[^/.]+$/, "").replace(/[-_]+/g, " ").trim();
-          graphics.push({
+    await Promise.all(
+      Object.entries(GRAPHIC_GROUPS).map(async ([groupKey, groupConfig]) => {
+        const files = await listGraphicsInFolder(groupKey);
+        const entries = files.map((fileName) => {
+          const key = fileName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+          const cleanName = fileName.replace(/\.[^/.]+$/, "").replace(/[-_]+/g, " ").trim();
+          return {
             key,
-            label: `${toDisplayCase(cleanName)} (${folder})`,
-            path: `${GITHUB_RAW_BASE}/${folder}/${encodeURIComponent(item.name)}`
-          });
-        }
-      } catch (error) {
-        console.warn(`Unable to load graphics from ${folder}:`, error);
-      }
-    }
+            label: toDisplayCase(cleanName),
+            path: `${groupConfig.folder}/${encodeURIComponent(fileName)}`
+          };
+        });
 
-    graphics
-      .sort((a, b) => a.label.localeCompare(b.label))
-      .forEach((entry) => {
-        GRAPHICS[entry.key] = { label: entry.label, path: entry.path };
-      });
+        entries.sort((a, b) => a.label.localeCompare(b.label));
+        entries.forEach((entry) => {
+          GRAPHICS[groupKey][entry.key] = { label: entry.label, path: entry.path };
+        });
 
-    populateGraphicSelect(graphics);
+        populateGraphicSelect(groupConfig.selectId, groupConfig.emptyOption, entries);
+      })
+    );
   }
 
-  function populateGraphicSelect(items) {
-    els.graphicSelect.innerHTML = "";
+  async function listGraphicsInFolder(groupKey) {
+    return GRAPHIC_FILES[groupKey] ? [...GRAPHIC_FILES[groupKey]] : [];
+  }
 
-    if (!items.length) {
-      const placeholder = document.createElement("option");
-      placeholder.value = "";
-      placeholder.textContent = "No graphics loaded";
-      els.graphicSelect.appendChild(placeholder);
-      state.graphicSelect = "";
-      return;
-    }
+  function populateGraphicSelect(selectId, emptyOption, items) {
+    const select = els[selectId];
+    select.innerHTML = "";
 
-    items.forEach((item, index) => {
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = items.length ? emptyOption : "No graphics loaded";
+    select.appendChild(placeholder);
+
+    items.forEach((item) => {
       const option = document.createElement("option");
       option.value = item.key;
       option.textContent = item.label;
-      els.graphicSelect.appendChild(option);
-      if (index === 0) {
-        state.graphicSelect = item.key;
-      }
+      select.appendChild(option);
     });
+  }
+
+  function getSelectedGraphicEntry() {
+    const selectOrder = [
+      ["ncsa", state.ncsaSelect],
+      ["region", state.regionSelect],
+      ["wing", state.wingSelect],
+      ["squadron", state.squadronSelect]
+    ];
+
+    for (const [groupKey, selectedKey] of selectOrder) {
+      if (selectedKey && GRAPHICS[groupKey][selectedKey]) {
+        return GRAPHICS[groupKey][selectedKey];
+      }
+    }
+
+    return null;
   }
 
   function toDisplayCase(text) {
