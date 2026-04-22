@@ -344,13 +344,6 @@
   </text>
 
   <g filter="url(#softShadow)">
-    <path
-      d="M 320 250 L 880 250 L 950 330 L 920 700 C 910 860, 800 960, 600 1060 C 400 960, 290 860, 280 700 L 250 330 Z"
-      fill="${palette.shieldFill}"
-      stroke="${palette.shieldStroke}"
-      stroke-width="10"
-    />
-
     <g transform="translate(600 708)">
       <path
         d="M -170 0 C -130 46, -80 74, -20 82 C -60 42, -95 0, -110 -58 C -132 -32, -152 -12, -170 0 Z"
