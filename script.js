@@ -351,10 +351,11 @@
         const entries = files.map((fileName) => {
           const key = fileName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
           const cleanName = fileName.replace(/\.[^/.]+$/, "").replace(/[-_]+/g, " ").trim();
+          const relativePath = `${groupConfig.folder}/${encodeURIComponent(fileName)}`;
           return {
             key,
             label: toDisplayCase(cleanName),
-            path: `${groupConfig.folder}/${encodeURIComponent(fileName)}`
+            path: new URL(relativePath, window.location.href).toString()
           };
         });
 
