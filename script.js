@@ -118,10 +118,10 @@
     els.showTopArcText.addEventListener("change", onFieldChange);
     els.useDiskImage.addEventListener("change", onFieldChange);
     els.bottomText.addEventListener("input", onFieldChange);
-    els.ncsaSelect.addEventListener("change", onGroupedSelectChange("ncsaSelect"));
-    els.regionSelect.addEventListener("change", onGroupedSelectChange("regionSelect"));
-    els.wingSelect.addEventListener("change", onGroupedSelectChange("wingSelect"));
-    els.squadronSelect.addEventListener("change", onGroupedSelectChange("squadronSelect"));
+    els.ncsaSelect?.addEventListener("change", onGroupedSelectChange("ncsaSelect"));
+    els.regionSelect?.addEventListener("change", onGroupedSelectChange("regionSelect"));
+    els.wingSelect?.addEventListener("change", onGroupedSelectChange("wingSelect"));
+    els.squadronSelect?.addEventListener("change", onGroupedSelectChange("squadronSelect"));
     els.makeTransparent.addEventListener("change", onFieldChange);
     els.graphicUpload.addEventListener("change", onUploadChange);
 
@@ -139,10 +139,10 @@
     els.showTopArcText.checked = state.showTopArcText;
     els.useDiskImage.checked = state.useDiskImage;
     els.bottomText.value = state.bottomText;
-    els.ncsaSelect.value = state.ncsaSelect;
-    els.regionSelect.value = state.regionSelect;
-    els.wingSelect.value = state.wingSelect;
-    els.squadronSelect.value = state.squadronSelect;
+    if (els.ncsaSelect) els.ncsaSelect.value = state.ncsaSelect;
+    if (els.regionSelect) els.regionSelect.value = state.regionSelect;
+    if (els.wingSelect) els.wingSelect.value = state.wingSelect;
+    if (els.squadronSelect) els.squadronSelect.value = state.squadronSelect;
     els.makeTransparent.checked = state.makeTransparent;
   }
 
@@ -158,7 +158,7 @@
 
   function clearOtherSelects(activeSelectId) {
     ["ncsaSelect", "regionSelect", "wingSelect", "squadronSelect"].forEach((selectId) => {
-      if (selectId !== activeSelectId) {
+      if (selectId !== activeSelectId && els[selectId]) {
         els[selectId].value = "";
       }
     });
@@ -197,7 +197,9 @@
 
     const fileDataUrl = await readFileAsDataUrl(file);
     ["ncsaSelect", "regionSelect", "wingSelect", "squadronSelect"].forEach((selectId) => {
-      els[selectId].value = "";
+      if (els[selectId]) {
+        els[selectId].value = "";
+      }
     });
     state.uploadedImageDataUrl = fileDataUrl;
     const uploadedImage = await loadImage(fileDataUrl);
@@ -223,10 +225,10 @@
     state.showTopArcText = els.showTopArcText.checked;
     state.useDiskImage = els.useDiskImage.checked;
     state.bottomText = els.bottomText.value.trim().toUpperCase();
-    state.ncsaSelect = els.ncsaSelect.value;
-    state.regionSelect = els.regionSelect.value;
-    state.wingSelect = els.wingSelect.value;
-    state.squadronSelect = els.squadronSelect.value;
+    state.ncsaSelect = els.ncsaSelect ? els.ncsaSelect.value : "";
+    state.regionSelect = els.regionSelect ? els.regionSelect.value : "";
+    state.wingSelect = els.wingSelect ? els.wingSelect.value : "";
+    state.squadronSelect = els.squadronSelect ? els.squadronSelect.value : "";
     state.makeTransparent = els.makeTransparent.checked;
   }
 
@@ -278,7 +280,7 @@
     }
 
     if (!state.uploadedImageDataUrl && !getSelectedGraphicEntry()) {
-      warnings.push("No secondary graphic was loaded. Pick from NCSA, Region, Wing, or Squadron, or upload a file.");
+      warnings.push("No secondary graphic was loaded. Upload a file to continue.");
     }
 
     return warnings;
@@ -375,6 +377,9 @@
 
   function populateGraphicSelect(selectId, emptyOption, items) {
     const select = els[selectId];
+    if (!select) {
+      return;
+    }
     select.innerHTML = "";
 
     const placeholder = document.createElement("option");
